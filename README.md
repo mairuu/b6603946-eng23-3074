@@ -1,3 +1,5 @@
+This repository contains lab materials and configuration for the course **ENG23 3074 – Serverless and Cloud Architectures** (B6603946, นายสุรเกียรติ สิงขรอาสน์).
+
 ## usage
 
 create cluster with kind:
