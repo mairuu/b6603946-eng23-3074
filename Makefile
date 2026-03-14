@@ -1,10 +1,15 @@
-.PHONY: all cluster ingress devops-tools wait-jenkins password clean
+.PHONY: all cluster ingress devops-tools monitoring wait-jenkins wait-grafana password clean
 
-all: cluster ingress devops-tools wait-jenkins password
+all: cluster ingress storageclass devops-tools monitoring wait-jenkins wait-grafana password
 
 cluster:
 	@echo "creating kind cluster..."
 	kind create cluster --config=kind.yaml
+	@echo "provisioning persistent volume directories..."
+	docker exec kind-control-plane sh -c \
+		"mkdir -p /mnt/jenkins-data /mnt/grafana-data && \
+		chown 1000:1000 /mnt/jenkins-data && \
+		chown 472:472 /mnt/grafana-data"
 
 ingress:
 	@echo "installing nginx ingress controller..."
@@ -18,13 +23,25 @@ ingress:
 	@echo "waiting for admission webhook to be ready..."
 	sleep 5
 
+storageclass:
+	@echo "deploying storageclass..."
+	kubectl apply -f storageclass.yaml
+
 devops-tools:
-	@echo "deploying devops-tools namespace and jenkins..."
+	@echo "deploying devops-tools..."
 	kubectl apply -f devops-tools/namespace.yaml
 	kubectl apply -f devops-tools/pv.yaml
 	kubectl apply -f devops-tools/pvc.yaml
 	kubectl apply -f devops-tools/jenkins.yaml
 	kubectl apply -f devops-tools/ingress.yaml
+
+monitoring:
+	@echo "deploying monitoring..."
+	kubectl apply -f monitoring/namespace.yaml
+	kubectl apply -f monitoring/pv.yaml
+	kubectl apply -f monitoring/pvc.yaml
+	kubectl apply -f monitoring/grafana.yaml
+	kubectl apply -f monitoring/ingress.yaml
 
 wait-jenkins:
 	@echo "waiting for jenkins to be ready..."
@@ -32,6 +49,14 @@ wait-jenkins:
 	kubectl wait --namespace devops-tools \
 		--for=condition=ready pod \
 		--selector=app=jenkins \
+		--timeout=300s
+
+wait-grafana:
+	@echo "waiting for grafana to be ready..."
+	sleep 5
+	kubectl wait --namespace monitoring \
+		--for=condition=ready pod \
+		--selector=app=grafana \
 		--timeout=300s
 
 password:
