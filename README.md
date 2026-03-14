@@ -29,10 +29,13 @@ kubectl apply -f devops-tools/jenkins.yaml
 kubectl apply -f devops-tools/ingress.yaml
 ```
 
-wait for Jenkins to be ready:
+wait for Jenkins to be ready
 
 ```bash
-kubectl get pods -n devops-tools -w
+kubectl wait --namespace devops-tools \
+  --for=condition=ready pod \
+  --selector=app=jenkins \
+  --timeout=300s
 ```
 
 get the initial admin password:
@@ -40,3 +43,10 @@ get the initial admin password:
 ```bash
 kubectl exec -n devops-tools -it deployment/jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
+
+## using the makefile
+
+you can automate all the above steps using the provided `Makefile`:
+
+- `make all`: creates the cluster, installs the nginx ingress controller, deploys jenkins, and fetches the admin password.
+- `make clean`: destroys the kind cluster when you are done.
