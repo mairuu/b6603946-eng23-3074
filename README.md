@@ -81,3 +81,6 @@ you can automate all the above steps using the provided `Makefile`:
 
 - `make all`: creates the cluster, installs the nginx ingress controller, deploys jenkins, and fetches the admin password.
 - `make clean`: destroys the kind cluster when you are done.
+
+![jekins](jekins.png) 
+![grafana](grafana.png)
